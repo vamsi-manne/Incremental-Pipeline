@@ -8,7 +8,7 @@ Data used and cloud servers used in this pipeline are
 Created Metadata table and load the tables into metadata table.
 
 Used the metadata to load all the tables data into pipeline.
-# Dataset and Cloud storage used
+# Dataset and Cloud storage Account
 Dataset: CSV or it can be changed to required dataset
 Storage Account: ADLSGEN2
 Source Data: Azure SQL Database
