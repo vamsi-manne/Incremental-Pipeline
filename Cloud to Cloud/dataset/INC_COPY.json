@@ -1,0 +1,57 @@
+{
+    "name": "INC_COPY",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "wsvamsi-WorkspaceDefaultStorage",
+            "type": "LinkedServiceReference"
+        },
+        "parameters": {
+            "FolderPath": {
+                "type": "string"
+            }
+        },
+        "annotations": [],
+        "type": "DelimitedText",
+        "typeProperties": {
+            "location": {
+                "type": "AzureBlobFSLocation",
+                "fileName": {
+                    "value": "data_@{formatDateTime(utcNow(), 'yyyyMMdd')}.csv",
+                    "type": "Expression"
+                },
+                "folderPath": {
+                    "value": "@dataset().FolderPath",
+                    "type": "Expression"
+                },
+                "fileSystem": "ncpl"
+            },
+            "columnDelimiter": ",",
+            "escapeChar": "\\",
+            "firstRowAsHeader": true,
+            "quoteChar": "\""
+        },
+        "schema": [
+            {
+                "name": "invoice_id",
+                "type": "String"
+            },
+            {
+                "name": "currency",
+                "type": "String"
+            },
+            {
+                "name": "subtotal",
+                "type": "String"
+            },
+            {
+                "name": "tax",
+                "type": "String"
+            },
+            {
+                "name": "total",
+                "type": "String"
+            }
+        ]
+    },
+    "type": "Microsoft.Synapse/workspaces/datasets"
+}
