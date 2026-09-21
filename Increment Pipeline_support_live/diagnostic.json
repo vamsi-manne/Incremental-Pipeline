@@ -1,0 +1,23 @@
+{
+    "now": "2026-09-21T15:04:44.427Z",
+    "perfNow": 33993.59999996424,
+    "diagnosticCorrelation": "5a910cea-8e70-4ee0-9fca-6f04648e3c7f",
+    "source": "DownloadSupportFiles",
+    "environment": {
+        "productName": "a365",
+        "buildVersion": "26.0907.04",
+        "environmentType": 9,
+        "resourceName": "wsvamsi",
+        "resourceRegion": "canadacentral",
+        "resourceGroup": "rg-ncpl-dev",
+        "subscriptionId": "de55247c-e1bf-4272-b8fd-8bbaf8a2b6fb",
+        "sessionId": "dwMjoXyI7TasaI27x9byVk",
+        "operationId": "QGSWf",
+        "gitType": "live",
+        "loggingKey": "8fb3b7c3-54cb-4d5e-8ba4-9141cf4ad1b3"
+    },
+    "additionalInfo": {
+        "selectedResource": "Increment Pipeline",
+        "selectedResourceType": "pipeline"
+    }
+}
