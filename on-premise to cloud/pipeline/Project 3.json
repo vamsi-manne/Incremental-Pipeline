@@ -1,0 +1,664 @@
+{
+    "name": "Project 3",
+    "properties": {
+        "activities": [
+            {
+                "name": "Lookup_Metadata_Table",
+                "type": "Lookup",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "SqlServerSource",
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None"
+                    },
+                    "dataset": {
+                        "referenceName": "SQLServer_SHIR",
+                        "type": "DatasetReference",
+                        "parameters": {
+                            "TableName": "MetadataTable",
+                            "SchemaName": "dbo"
+                        }
+                    },
+                    "firstRowOnly": false
+                }
+            },
+            {
+                "name": "ForEach1",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "Lookup_Metadata_Table",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('Lookup_Metadata_Table').output.value",
+                        "type": "Expression"
+                    },
+                    "activities": [
+                        {
+                            "name": "If Condition",
+                            "type": "IfCondition",
+                            "dependsOn": [],
+                            "userProperties": [],
+                            "typeProperties": {
+                                "expression": {
+                                    "value": "@equals(item().LoadType, 'Increment')",
+                                    "type": "Expression"
+                                },
+                                "ifFalseActivities": [
+                                    {
+                                        "name": "Full Copy",
+                                        "type": "Copy",
+                                        "dependsOn": [],
+                                        "policy": {
+                                            "timeout": "0.12:00:00",
+                                            "retry": 0,
+                                            "retryIntervalInSeconds": 30,
+                                            "secureOutput": false,
+                                            "secureInput": false
+                                        },
+                                        "userProperties": [],
+                                        "typeProperties": {
+                                            "source": {
+                                                "type": "SqlServerSource",
+                                                "queryTimeout": "02:00:00",
+                                                "partitionOption": "None"
+                                            },
+                                            "sink": {
+                                                "type": "DelimitedTextSink",
+                                                "storeSettings": {
+                                                    "type": "AzureBlobFSWriteSettings"
+                                                },
+                                                "formatSettings": {
+                                                    "type": "DelimitedTextWriteSettings",
+                                                    "quoteAllText": true,
+                                                    "fileExtension": ".txt"
+                                                }
+                                            },
+                                            "enableStaging": false,
+                                            "translator": {
+                                                "type": "TabularTranslator",
+                                                "typeConversion": true,
+                                                "typeConversionSettings": {
+                                                    "allowDataTruncation": true,
+                                                    "treatBooleanAsNumber": false
+                                                }
+                                            }
+                                        },
+                                        "inputs": [
+                                            {
+                                                "referenceName": "SQLServer_SHIR",
+                                                "type": "DatasetReference",
+                                                "parameters": {
+                                                    "TableName": {
+                                                        "value": "@{item().TableName}",
+                                                        "type": "Expression"
+                                                    },
+                                                    "SchemaName": {
+                                                        "value": "@{item().SchemaName}",
+                                                        "type": "Expression"
+                                                    }
+                                                }
+                                            }
+                                        ],
+                                        "outputs": [
+                                            {
+                                                "referenceName": "IF_INC_COPY",
+                                                "type": "DatasetReference",
+                                                "parameters": {
+                                                    "FolderPath": {
+                                                        "value": "@{item().FolderPath}",
+                                                        "type": "Expression"
+                                                    },
+                                                    "FileExtension": {
+                                                        "value": "@{item().FileExtension}",
+                                                        "type": "Expression"
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "name": "Centralized logging On Success_copy1",
+                                        "type": "SqlServerStoredProcedure",
+                                        "dependsOn": [
+                                            {
+                                                "activity": "Full Copy",
+                                                "dependencyConditions": [
+                                                    "Succeeded"
+                                                ]
+                                            }
+                                        ],
+                                        "policy": {
+                                            "timeout": "0.12:00:00",
+                                            "retry": 0,
+                                            "retryIntervalInSeconds": 30,
+                                            "secureOutput": false,
+                                            "secureInput": false
+                                        },
+                                        "userProperties": [],
+                                        "typeProperties": {
+                                            "storedProcedureName": "[dbo].[LogPipelineLoad]",
+                                            "storedProcedureParameters": {
+                                                "Errormessage": {
+                                                    "value": null,
+                                                    "type": "String"
+                                                },
+                                                "LoadEndTime": {
+                                                    "value": {
+                                                        "value": "@utcNow()",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "DateTime"
+                                                },
+                                                "LoadstartTime": {
+                                                    "value": {
+                                                        "value": "@activity('Full Copy').output.executionDetails[0].start",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "DateTime"
+                                                },
+                                                "Loadstatus": {
+                                                    "value": {
+                                                        "value": "@activity('Full Copy').output.executionDetails[0].status",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "String"
+                                                },
+                                                "pipelineID": {
+                                                    "value": {
+                                                        "value": "@pipeline().RunId",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "String"
+                                                },
+                                                "RecordsProcessed": {
+                                                    "value": {
+                                                        "value": "@activity('Full Copy').output.rowsCopied",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "Int64"
+                                                },
+                                                "TableName": {
+                                                    "value": {
+                                                        "value": "@{item().TableName}",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "String"
+                                                }
+                                            }
+                                        },
+                                        "linkedServiceName": {
+                                            "referenceName": "Sql_Server_project_SHIR",
+                                            "type": "LinkedServiceReference"
+                                        }
+                                    },
+                                    {
+                                        "name": "Centralized logging On Failure_copy1",
+                                        "type": "SqlServerStoredProcedure",
+                                        "dependsOn": [
+                                            {
+                                                "activity": "Full Copy",
+                                                "dependencyConditions": [
+                                                    "Failed"
+                                                ]
+                                            }
+                                        ],
+                                        "policy": {
+                                            "timeout": "0.12:00:00",
+                                            "retry": 0,
+                                            "retryIntervalInSeconds": 30,
+                                            "secureOutput": false,
+                                            "secureInput": false
+                                        },
+                                        "userProperties": [],
+                                        "typeProperties": {
+                                            "storedProcedureName": "[dbo].[LogPipelineLoad]",
+                                            "storedProcedureParameters": {
+                                                "Errormessage": {
+                                                    "value": {
+                                                        "value": "@activity('Full Copy').Error.Message",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "String"
+                                                },
+                                                "LoadEndTime": {
+                                                    "value": {
+                                                        "value": "@utcNow()",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "DateTime"
+                                                },
+                                                "LoadstartTime": {
+                                                    "value": {
+                                                        "value": "@activity('Full Copy').output.executionDetails[0].start",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "DateTime"
+                                                },
+                                                "Loadstatus": {
+                                                    "value": {
+                                                        "value": "@activity('Full Copy').output.executionDetails[0].status",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "String"
+                                                },
+                                                "pipelineID": {
+                                                    "value": {
+                                                        "value": "@pipeline().RunId",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "String"
+                                                },
+                                                "RecordsProcessed": {
+                                                    "value": null,
+                                                    "type": "Int64"
+                                                },
+                                                "TableName": {
+                                                    "value": {
+                                                        "value": "@{item().TableName}",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "String"
+                                                }
+                                            }
+                                        },
+                                        "linkedServiceName": {
+                                            "referenceName": "Sql_Server_project_SHIR",
+                                            "type": "LinkedServiceReference"
+                                        }
+                                    },
+                                    {
+                                        "name": "Email On failure_copy1",
+                                        "type": "WebActivity",
+                                        "dependsOn": [
+                                            {
+                                                "activity": "Full Copy",
+                                                "dependencyConditions": [
+                                                    "Failed"
+                                                ]
+                                            }
+                                        ],
+                                        "policy": {
+                                            "timeout": "0.12:00:00",
+                                            "retry": 0,
+                                            "retryIntervalInSeconds": 30,
+                                            "secureOutput": false,
+                                            "secureInput": false
+                                        },
+                                        "userProperties": [],
+                                        "typeProperties": {
+                                            "method": "POST",
+                                            "url": "https://prod-20.canadacentral.logic.azure.com:443/workflows/6065e452a87d466fa6f944673c13d96a/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=6e1RhU0j-mBLq-SHoNHca5T898HTDhB9KPqmATUs0sY",
+                                            "connectVia": {
+                                                "referenceName": "AutoResolveIntegrationRuntime",
+                                                "type": "IntegrationRuntimeReference"
+                                            },
+                                            "body": {
+                                                "value": "{\n    \"pipelineName\" : \"@{pipeline().Pipeline}\",\n    \"pipelineRunID\" : \"@{pipeline().RunId}\",\n    \"SynapseName\" : \"@{pipeline().DataFactory}\",\n    \"ErrorMessage\" : \"@{activity('Full Copy').output.Error.Message}\",\n    \"TableName\" : \"@{item().TableName}\"\n}",
+                                                "type": "Expression"
+                                            }
+                                        }
+                                    }
+                                ],
+                                "ifTrueActivities": [
+                                    {
+                                        "name": "Increment Copy",
+                                        "type": "Copy",
+                                        "dependsOn": [],
+                                        "policy": {
+                                            "timeout": "0.12:00:00",
+                                            "retry": 0,
+                                            "retryIntervalInSeconds": 30,
+                                            "secureOutput": false,
+                                            "secureInput": false
+                                        },
+                                        "userProperties": [],
+                                        "typeProperties": {
+                                            "source": {
+                                                "type": "SqlServerSource",
+                                                "sqlReaderQuery": {
+                                                    "value": "select * from @{item().SchemaName}.@{item().TableName} where @{item().ColumnName}>@{item().LastLoadedValue}",
+                                                    "type": "Expression"
+                                                },
+                                                "queryTimeout": "02:00:00",
+                                                "partitionOption": "None"
+                                            },
+                                            "sink": {
+                                                "type": "DelimitedTextSink",
+                                                "storeSettings": {
+                                                    "type": "AzureBlobFSWriteSettings"
+                                                },
+                                                "formatSettings": {
+                                                    "type": "DelimitedTextWriteSettings",
+                                                    "quoteAllText": true,
+                                                    "fileExtension": ".txt"
+                                                }
+                                            },
+                                            "enableStaging": false,
+                                            "translator": {
+                                                "type": "TabularTranslator",
+                                                "typeConversion": true,
+                                                "typeConversionSettings": {
+                                                    "allowDataTruncation": true,
+                                                    "treatBooleanAsNumber": false
+                                                }
+                                            }
+                                        },
+                                        "inputs": [
+                                            {
+                                                "referenceName": "SQLServer_SHIR",
+                                                "type": "DatasetReference",
+                                                "parameters": {
+                                                    "TableName": "\"\"",
+                                                    "SchemaName": "\"\""
+                                                }
+                                            }
+                                        ],
+                                        "outputs": [
+                                            {
+                                                "referenceName": "IF_INC_COPY",
+                                                "type": "DatasetReference",
+                                                "parameters": {
+                                                    "FolderPath": {
+                                                        "value": "@{item().FolderPath}",
+                                                        "type": "Expression"
+                                                    },
+                                                    "FileExtension": {
+                                                        "value": "@{item().FileExtension}",
+                                                        "type": "Expression"
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "name": "Inc_LookUP",
+                                        "type": "Lookup",
+                                        "dependsOn": [
+                                            {
+                                                "activity": "Increment Copy",
+                                                "dependencyConditions": [
+                                                    "Succeeded"
+                                                ]
+                                            }
+                                        ],
+                                        "policy": {
+                                            "timeout": "0.12:00:00",
+                                            "retry": 0,
+                                            "retryIntervalInSeconds": 30,
+                                            "secureOutput": false,
+                                            "secureInput": false
+                                        },
+                                        "userProperties": [],
+                                        "typeProperties": {
+                                            "source": {
+                                                "type": "SqlServerSource",
+                                                "sqlReaderQuery": {
+                                                    "value": "select max(@{item().ColumnName}) as max_value from @{item().SchemaName}.@{item().TableName}",
+                                                    "type": "Expression"
+                                                },
+                                                "queryTimeout": "02:00:00",
+                                                "partitionOption": "None"
+                                            },
+                                            "dataset": {
+                                                "referenceName": "SQLServer_SHIR",
+                                                "type": "DatasetReference",
+                                                "parameters": {
+                                                    "TableName": "\"\"",
+                                                    "SchemaName": "\"\""
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "name": "Stored procedure1",
+                                        "type": "SqlServerStoredProcedure",
+                                        "dependsOn": [
+                                            {
+                                                "activity": "Inc_LookUP",
+                                                "dependencyConditions": [
+                                                    "Succeeded"
+                                                ]
+                                            }
+                                        ],
+                                        "policy": {
+                                            "timeout": "0.12:00:00",
+                                            "retry": 0,
+                                            "retryIntervalInSeconds": 30,
+                                            "secureOutput": false,
+                                            "secureInput": false
+                                        },
+                                        "userProperties": [],
+                                        "typeProperties": {
+                                            "storedProcedureName": "[dbo].[store_last_loaded_value]",
+                                            "storedProcedureParameters": {
+                                                "LastLoadedValue": {
+                                                    "value": {
+                                                        "value": "@activity('Inc_LookUP').output.firstRow.max_value",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "String"
+                                                },
+                                                "TableName": {
+                                                    "value": {
+                                                        "value": "@{item().TableName}",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "String"
+                                                }
+                                            }
+                                        },
+                                        "linkedServiceName": {
+                                            "referenceName": "Sql_Server_project_SHIR",
+                                            "type": "LinkedServiceReference"
+                                        }
+                                    },
+                                    {
+                                        "name": "Centralized logging On Success",
+                                        "type": "SqlServerStoredProcedure",
+                                        "dependsOn": [
+                                            {
+                                                "activity": "Increment Copy",
+                                                "dependencyConditions": [
+                                                    "Succeeded"
+                                                ]
+                                            }
+                                        ],
+                                        "policy": {
+                                            "timeout": "0.12:00:00",
+                                            "retry": 0,
+                                            "retryIntervalInSeconds": 30,
+                                            "secureOutput": false,
+                                            "secureInput": false
+                                        },
+                                        "userProperties": [],
+                                        "typeProperties": {
+                                            "storedProcedureName": "[dbo].[LogPipelineLoad]",
+                                            "storedProcedureParameters": {
+                                                "Errormessage": {
+                                                    "value": null,
+                                                    "type": "String"
+                                                },
+                                                "LoadEndTime": {
+                                                    "value": {
+                                                        "value": "@utcNow()",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "DateTime"
+                                                },
+                                                "LoadstartTime": {
+                                                    "value": {
+                                                        "value": "@activity('Increment Copy').output.executionDetails[0].start",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "DateTime"
+                                                },
+                                                "Loadstatus": {
+                                                    "value": {
+                                                        "value": "@activity('Increment Copy').output.executionDetails[0].status",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "String"
+                                                },
+                                                "pipelineID": {
+                                                    "value": {
+                                                        "value": "@pipeline().RunId",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "String"
+                                                },
+                                                "RecordsProcessed": {
+                                                    "value": {
+                                                        "value": "@activity('Increment Copy').output.rowsCopied",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "Int64"
+                                                },
+                                                "TableName": {
+                                                    "value": {
+                                                        "value": "@{item().TableName}",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "String"
+                                                }
+                                            }
+                                        },
+                                        "linkedServiceName": {
+                                            "referenceName": "Sql_Server_project_SHIR",
+                                            "type": "LinkedServiceReference"
+                                        }
+                                    },
+                                    {
+                                        "name": "Centralized logging On Failure",
+                                        "type": "SqlServerStoredProcedure",
+                                        "dependsOn": [
+                                            {
+                                                "activity": "Increment Copy",
+                                                "dependencyConditions": [
+                                                    "Failed"
+                                                ]
+                                            }
+                                        ],
+                                        "policy": {
+                                            "timeout": "0.12:00:00",
+                                            "retry": 0,
+                                            "retryIntervalInSeconds": 30,
+                                            "secureOutput": false,
+                                            "secureInput": false
+                                        },
+                                        "userProperties": [],
+                                        "typeProperties": {
+                                            "storedProcedureName": "[dbo].[LogPipelineLoad]",
+                                            "storedProcedureParameters": {
+                                                "Errormessage": {
+                                                    "value": {
+                                                        "value": "@activity('Increment Copy').Error.Message",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "String"
+                                                },
+                                                "LoadEndTime": {
+                                                    "value": {
+                                                        "value": "@utcNow()",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "DateTime"
+                                                },
+                                                "LoadstartTime": {
+                                                    "value": {
+                                                        "value": "@activity('Increment Copy').output.executionDetails[0].start",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "DateTime"
+                                                },
+                                                "Loadstatus": {
+                                                    "value": {
+                                                        "value": "@activity('Increment Copy').output.executionDetails[0].status",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "String"
+                                                },
+                                                "pipelineID": {
+                                                    "value": {
+                                                        "value": "@pipeline().RunId",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "String"
+                                                },
+                                                "RecordsProcessed": {
+                                                    "value": null,
+                                                    "type": "Int64"
+                                                },
+                                                "TableName": {
+                                                    "value": {
+                                                        "value": "@{item().TableName}",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "String"
+                                                }
+                                            }
+                                        },
+                                        "linkedServiceName": {
+                                            "referenceName": "Sql_Server_project_SHIR",
+                                            "type": "LinkedServiceReference"
+                                        }
+                                    },
+                                    {
+                                        "name": "Email On failure",
+                                        "type": "WebActivity",
+                                        "dependsOn": [
+                                            {
+                                                "activity": "Increment Copy",
+                                                "dependencyConditions": [
+                                                    "Failed"
+                                                ]
+                                            }
+                                        ],
+                                        "policy": {
+                                            "timeout": "0.12:00:00",
+                                            "retry": 0,
+                                            "retryIntervalInSeconds": 30,
+                                            "secureOutput": false,
+                                            "secureInput": false
+                                        },
+                                        "userProperties": [],
+                                        "typeProperties": {
+                                            "method": "POST",
+                                            "url": "https://prod-20.canadacentral.logic.azure.com:443/workflows/6065e452a87d466fa6f944673c13d96a/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=6e1RhU0j-mBLq-SHoNHca5T898HTDhB9KPqmATUs0sY",
+                                            "connectVia": {
+                                                "referenceName": "AutoResolveIntegrationRuntime",
+                                                "type": "IntegrationRuntimeReference"
+                                            },
+                                            "body": {
+                                                "value": "{\n    \"pipelineName\" : \"@{pipeline().Pipeline}\",\n    \"pipelineRunID\" : \"@{pipeline().RunId}\",\n    \"SynapseName\" : \"@{pipeline().DataFactory}\",\n    \"ErrorMessage\" : \"@{activity('Increment Copy').Error.Message}\",\n    \"TableName\" : \"@{item().TableName}\"\n}",
+                                                "type": "Expression"
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "annotations": [],
+        "lastPublishTime": "2026-08-17T16:20:08Z"
+    },
+    "type": "Microsoft.Synapse/workspaces/pipelines"
+}

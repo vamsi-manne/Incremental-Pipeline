@@ -1,0 +1,6 @@
+selected resource name:		Project 3
+selected resource type:		pipeline
+workspace name:			wsvamsi
+workspace location:		canadacentral
+subscription id:		de55247c-e1bf-4272-b8fd-8bbaf8a2b6fb
+time of download (UTC):		Mon, 21 Sep 2026 15:08:00 GMT

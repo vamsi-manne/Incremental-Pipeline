@@ -1,0 +1,21 @@
+{
+    "name": "Sql_Server_project_SHIR",
+    "type": "Microsoft.Synapse/workspaces/linkedservices",
+    "properties": {
+        "annotations": [],
+        "type": "SqlServer",
+        "typeProperties": {
+            "server": "vasu-VM",
+            "database": "vamsi",
+            "encrypt": "optional",
+            "trustServerCertificate": false,
+            "authenticationType": "SQL",
+            "userName": "vasu1999",
+            "encryptedCredential": "eyJDcmVkZW50aWFsSWQiOiI5ZjMzOTA0Yi04ODZkLTQ1MzktYjhhMi04MTJjOGViM2Q0MWIiLCJWZXJzaW9uIjoiMi4wIiwiQ2xhc3NUeXBlIjoiTWljcm9zb2Z0LkRhdGFQcm94eS5Db3JlLkludGVyU2VydmljZURhdGFDb250cmFjdC5DcmVkZW50aWFsU1UwNkNZMTQifQ=="
+        },
+        "connectVia": {
+            "referenceName": "SHIR",
+            "type": "IntegrationRuntimeReference"
+        }
+    }
+}

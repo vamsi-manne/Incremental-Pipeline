@@ -1,0 +1,23 @@
+{
+    "now": "2026-09-21T15:08:00.494Z",
+    "perfNow": 83033.69999998808,
+    "diagnosticCorrelation": "07f7f87c-9d26-4b1e-90a2-4a9707a3c397",
+    "source": "DownloadSupportFiles",
+    "environment": {
+        "productName": "a365",
+        "buildVersion": "26.0907.04",
+        "environmentType": 9,
+        "resourceName": "wsvamsi",
+        "resourceRegion": "canadacentral",
+        "resourceGroup": "rg-ncpl-dev",
+        "subscriptionId": "de55247c-e1bf-4272-b8fd-8bbaf8a2b6fb",
+        "sessionId": "dwMjoXyI7TasaI27x9byVk",
+        "operationId": "sBEuZ",
+        "gitType": "live",
+        "loggingKey": "99c05986-af1e-4d4f-ac35-2e0682017a57"
+    },
+    "additionalInfo": {
+        "selectedResource": "Project 3",
+        "selectedResourceType": "pipeline"
+    }
+}
